@@ -27,8 +27,9 @@ public class MainActivity extends AppCompatActivity {
     private Button botaoRecuperar;
     private TextView textoResultado;
     private Retrofit retrofit;
+    private List<Post> listaPostagens = new ArrayList<>();
 
-    private List<Foto> listaFotos = new ArrayList<>();
+    DataService dataService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +54,12 @@ public class MainActivity extends AppCompatActivity {
         String url = "https://jsonplaceholder.typicode.com";
 
         retrofit = new Retrofit.Builder()
-                .baseUrl(url)
+                //.baseUrl("https://viacep.com.br/ws/")
+                .baseUrl("https://jsonplaceholder.typicode.com")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
+        dataService = retrofit.create(DataService.class);
+
 
         botaoRecuperar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -63,22 +67,47 @@ public class MainActivity extends AppCompatActivity {
 
 //                recuperarDadosRetrofit();
 //                recuperarListaRetrofit();
+//                salvarPostagem();
+                atualizarPostagem();
+//                atualizarPostagemPath();
 
-                salvarPostagem();
+//                deletarPostagens();
+            }
+        });
+    }
+
+    private void deletarPostagens() {
+
+        Call<Void> call = dataService.removerPostagem(2);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+
+                if( response.isSuccessful() ){
+                    textoResultado.setText( "Status: " + response.code() );
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
 
             }
         });
     }
 
 
-    private void salvarPostagem(){
+    private void atualizarPostagemPath() {
+    }
 
-        //Configura objeto postagem
-        //Postagem postagem = new Postagem("1234", "Título postagem!", "Corpo postagem");
+    private void atualizarPostagem() {
 
-        //recupera o serviço e salva postagem
-        DataService service = retrofit.create(DataService.class);
-        Call<Post> call = service.salvarPostagem( 1234, "Título postagem!", "Corpo postagem" );
+        //Configura objeto post
+        //Postagem post = new Postagem("1234", null, "Corpo post");
+        Post post = new Post();
+        post.setBody("Corpo da post alterado");
+
+        Call<Post> call = dataService.atualizarPostagemPath(2, post);
 
         call.enqueue(new Callback<Post>() {
             @Override
@@ -86,9 +115,11 @@ public class MainActivity extends AppCompatActivity {
                 if( response.isSuccessful() ){
                     Post postagemResposta = response.body();
                     textoResultado.setText(
-                            "Código: " + response.code() +
+                            " Status: " + response.code() +
                                     " id: " + postagemResposta.getId() +
-                                    " titulo: " + postagemResposta.getTitle()
+                                    " userId: " + postagemResposta.getUserId() +
+                                    " titulo: " + postagemResposta.getTitle() +
+                                    " body: " + postagemResposta.getBody()
                     );
                 }
             }
@@ -98,32 +129,63 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+
+    private void salvarPostagem(){
+        //Configura objeto postagem
+        //Postagem postagem = new Postagem(132, "Título postagem!", "Corpo postagem");
+
+        //recupera o serviço e salva postagem
+        Call<Post> call = dataService.salvarPostagem( 132, "Título postagem!", "Corpo postagem" );
+
+        call.enqueue(new Callback<Post>() {
+            @Override
+            public void onResponse(Call<Post> call, Response<Post> response) {
+
+                if( response.isSuccessful() ){
+                    Post postagemResposta = response.body();
+                    textoResultado.setText(
+                            "Código: " + response.code() +
+                                    " id: " + postagemResposta.getId() +
+                                    " titulo: " + postagemResposta.getTitle()
+                    );
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<Post> call, Throwable t) {
+
+            }
+        });
+
 
 
     }
 
     public void recuperarListaRetrofit(){
 
-        DataService dataService = retrofit.create(DataService.class);
-        Call<List<Foto>> call = dataService.recuperarFotos();
+        DataService service = retrofit.create(DataService.class);
+        //Call<List<Foto>> call = service.recuperarFotos();
+        Call<List<Post>> call = service.recuperarPostagens();
 
-
-        call.enqueue(new Callback<List<Foto>>() {
+        call.enqueue(new Callback<List<Post>>() {
             @Override
-            public void onResponse(Call<List<Foto>> call, Response<List<Foto>> response) {
+            public void onResponse(Call<List<Post>> call, Response<List<Post>> response) {
+                if( response.isSuccessful() ){
+                    listaPostagens = response.body();
 
-                if (response.isSuccessful()){
-                    listaFotos = response.body();
-
-                    for (int i = 0; i < listaFotos.size(); i++){
-                        Foto foto = listaFotos.get(i);
-                        Log.d("resposta", "resultado: " + foto.getTitle() );
+                    for (int i=0; i<listaPostagens.size(); i++ ){
+                        Post postagem = listaPostagens.get( i );
+                        Log.d("resultado", "resultado: " + postagem.getId() + " / " + postagem.getTitle() );
                     }
+
                 }
             }
 
             @Override
-            public void onFailure(Call<List<Foto>> call, Throwable t) {
+            public void onFailure(Call<List<Post>> call, Throwable t) {
 
             }
         });

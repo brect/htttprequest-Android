@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.requisicoes.cursoandroid.requisicoeshttp.model.CepVO;
 import com.requisicoes.cursoandroid.requisicoeshttp.model.Foto;
+import com.requisicoes.cursoandroid.requisicoeshttp.model.Post;
 import com.requisicoes.cursoandroid.requisicoeshttp.requisicao.CEPService;
 import com.requisicoes.cursoandroid.requisicoeshttp.requisicao.DataService;
 
@@ -61,10 +62,44 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
 //                recuperarDadosRetrofit();
-                recuperarListaRetrofit();
+//                recuperarListaRetrofit();
+
+                salvarPostagem();
 
             }
         });
+    }
+
+
+    private void salvarPostagem(){
+
+        //Configura objeto postagem
+        //Postagem postagem = new Postagem("1234", "Título postagem!", "Corpo postagem");
+
+        //recupera o serviço e salva postagem
+        DataService service = retrofit.create(DataService.class);
+        Call<Post> call = service.salvarPostagem( 1234, "Título postagem!", "Corpo postagem" );
+
+        call.enqueue(new Callback<Post>() {
+            @Override
+            public void onResponse(Call<Post> call, Response<Post> response) {
+                if( response.isSuccessful() ){
+                    Post postagemResposta = response.body();
+                    textoResultado.setText(
+                            "Código: " + response.code() +
+                                    " id: " + postagemResposta.getId() +
+                                    " titulo: " + postagemResposta.getTitle()
+                    );
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Post> call, Throwable t) {
+
+            }
+        });
+
+
     }
 
     public void recuperarListaRetrofit(){
